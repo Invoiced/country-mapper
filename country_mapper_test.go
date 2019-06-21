@@ -1,9 +1,8 @@
 package country_mapper
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 var mockClient *CountryInfoClient
@@ -12,9 +11,33 @@ var mockClient *CountryInfoClient
 // Setup Tests
 //===========================================
 func Test_Init(t *testing.T) {
-	client, err := Load()
+	client, err := Load("", true)
 	assert.Nil(t, err)
 	mockClient = client
+}
+
+//===========================================
+// Setup Tests 2
+//===========================================
+func Test_Init2(t *testing.T) {
+	_, err := Load("files/country_info.csv", false)
+	assert.Nil(t, err)
+}
+
+//===========================================
+// Setup Tests 3
+//===========================================
+func Test_Init3(t *testing.T) {
+	_, err := Load("", false)
+	assert.Equal(t, err.Error(), "file name must be given")
+}
+
+//===========================================
+// Setup Tests 4
+//===========================================
+func Test_Init4(t *testing.T) {
+	_, err := Load("lazy.com", true)
+	assert.Equal(t, err.Error(), "remote url is not valid")
 }
 
 //===========================================

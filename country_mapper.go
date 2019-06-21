@@ -2,7 +2,9 @@ package country_mapper
 
 import (
 	"encoding/csv"
+	"errors"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -140,22 +142,63 @@ func readCSVFromURL(fileURL string) ([][]string, error) {
 	return data, nil
 }
 
+func readCSVFromLocal(filePath string) ([][]string, error) {
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+	reader := csv.NewReader(file)
+	reader.Comma = ';'
+	data, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 // Pass in an optional url if you would like to use your own downloadable csv file for country's data.
 // This is useful if you prefer to host the data file yourself or if you have modified some of the fields
 // for your specific use case.
-func Load(specifiedURL ...string) (*CountryInfoClient, error) {
+// You can now pass in location to a local repo
+func Load(specifiedURL string, remote bool) (*CountryInfoClient, error) {
 	var fileURL string
+
+	if !remote && len(specifiedURL) == 0 {
+		return nil, errors.New("file name must be given")
+	}
 
 	// use user specified url for csv file if provided, else use default file URL
 	if len(specifiedURL) > 0 {
-		fileURL = specifiedURL[0]
+		fileURL = specifiedURL
 	} else {
 		fileURL = defaultFile
 	}
 
-	data, err := readCSVFromURL(fileURL)
-	if err != nil {
-		return nil, err
+	var data [][]string
+	var err error
+
+	if remote && (!strings.Contains(fileURL, "http://") && !strings.Contains(fileURL, "https://")) {
+		return nil, errors.New("remote url is not valid")
+	}
+
+	if remote {
+
+		data, err = readCSVFromURL(fileURL)
+		if err != nil {
+			return nil, err
+		}
+
+	} else {
+
+		data, err = readCSVFromLocal(fileURL)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	recordList := []*CountryInfo{}
